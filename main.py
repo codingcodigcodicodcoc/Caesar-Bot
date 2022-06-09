@@ -33,8 +33,8 @@ async def bal(ctx):
 
 @bot.command()
 async def color(ctx):
-  def check(m):
-    return m.content == 'hello'
+  def check(y):
+    return y.author == ctx.author and y.channel == ctx.channel
   rand = random.randrange(0,7)
   if rand == 0:
     str = ':red_square:'
@@ -59,13 +59,13 @@ async def color(ctx):
     await ctx.send(str)
   await ctx.send("What is the color of this square?")
   x = str.index("_")
-  y = await bot.wait_for('message', check=check)
-  print(y)
   print(str[1:x])
-  if (str[1:x]) == y or (str[1:2]) == y:
-    print('win')
+  y = await bot.wait_for("message", check=check)
+  print(y.content.lower())
+  if (str[1:x]) == y.content.lower() or (str[1:2]) == y.content.lower():
+    await ctx.send('win')
   else:
-    print('lose')
+    await ctx.send('lose')
 
 @bot.command()
 async def coin(ctx, arg, val):
@@ -108,8 +108,98 @@ async def add(ctx, user: discord.Member):
 
 @bot.command()
 async def blackjack(ctx, arg):
-  card = []
-
+  gameNotLost = True
+  def check(response):
+    return response.author == ctx.author and response.channel == ctx.channel
+  def convertCard(num):
+    if num == 2:
+      return "<:2c:984228235426533426>"
+    if num == 3:
+      return "<:3c:984228236571594792>"
+    if num == 4:
+      return "<:4c:984228237511106560>"
+    if num == 5:
+      return "<:5c:984228238618398800>"
+    if num == 6:
+      return "<:6c:984228239595667476>"
+    if num == 7:
+      return "<:7c:984228240539394108>"
+    if num == 8:
+      return "<:8c:984228241642512404>"
+    if num == 9:
+      return "<:9c:984228242770759690>"
+    if num == 10:
+      return "<:10c:984228244142301244>"
+    if num == "J":
+      return "<:Jc:984228246650495017>"
+    if num == "Q":
+      return "<:Qc:984228249179656212>"
+    if num == "K":
+      return "<:Kc:984228248131108864>"
+    if num == "A":
+      return "<:Ac:984228245383835649>"
+  def addTotal(arr):
+    val = 0
+    for i in arr:
+      arrval = arr[i]
+      exc = arrval[2:3]
+      if exc == "J" or exc == "Q" or exc == "K":
+        exc = 10
+      if exc == "A":
+        exc = 11
+      val = val + exc
+      if val <= 21:
+        return True
+      if val > 21:
+        return False
+  count = 0
+  card = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, "J", "J", "J", "J", "Q", "Q", "Q", "Q", "K", "K", "K", "K", "A", "A", "A", "A"]
+  used = []
+  dealerhand = []
+  playerhand = []
+  for i in range(52):
+    used.append(0)
+  await ctx.send("Dealer hand:")
+  while count < 2:
+    cont = False
+    draw = random.randrange(0,52)
+    if used[draw] == 0:
+      dealerhand.append(convertCard(card[draw]))
+      used.insert(draw, 1)
+      count = count+1
+      cont = True
+    if count == 1 and cont == True:
+      d = await ctx.send(f'>>> {dealerhand[0]}')
+    elif count == 2 and cont == True:
+      await d.edit(content=f'>>> {dealerhand[0]} <:hidden:984230599621476363>')
+  count = 0
+  await ctx.send("Your hand:")
+  while count < 2:
+    cont = False
+    draw = random.randrange(0,52)
+    if used[draw] == 0:
+      playerhand.append(convertCard(card[draw]))
+      used.insert(draw,1)
+      count = count+1
+      cont = True
+    if count == 1 and cont == True:
+      startHand = await ctx.send(f'>>> {playerhand[0]}')
+    elif count == 2 and cont == True:
+      await startHand.edit(content = f'>>> {playerhand[0]} {playerhand[1]}')
+  times = 1
+  while gameNotLost == True:
+    curHand = startHand.content.lower()
+    await ctx.send("Hit or Stay?")
+    response = await bot.wait_for("message", check=check)
+    if response.content.lower() == "Hit" or response.content.lower() == "hit" or response.content.lower() == "h":
+      draw = random.randrange(0,52)
+      if used[draw] == 0:
+        times = times + 1
+        playerhand.append(convertCard(card[draw]))
+        used.insert(draw,1)
+        await startHand.edit(content = f'{curHand} {playerhand[times]}')
+        gameNotLost = addTotal(playerhand)
+  print(arg)
 
 @bot.command()
 async def dadjoke(ctx):
